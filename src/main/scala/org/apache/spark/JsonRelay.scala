@@ -9,7 +9,7 @@ import org.json4s.jackson.JsonMethods._
 import org.json4s.JsonDSL._
 import org.apache.spark.scheduler.{SparkListenerExecutorMetricsUpdate, SparkListenerEvent}
 import org.apache.spark.util.{Utils, JsonProtocol}
-import org.json4s.JsonAST.{JObject, JNothing, JValue}
+import org.json4s.JsonAST.{JArray, JObject, JNothing, JValue}
 
 class JsonRelay(conf: SparkConf) extends SparkFirehoseListener {
 
@@ -48,15 +48,15 @@ class JsonRelay(conf: SparkConf) extends SparkFirehoseListener {
       // spark-core:1.5.0, which seems worse than just duplicating the code
       // path here.
       case e: SparkListenerExecutorMetricsUpdate =>
-        if (e.taskMetrics.nonEmpty)
+        if (e.accumUpdates.nonEmpty)
           ("Event" -> Utils.getFormattedClassName(e)) ~
             ("Executor ID" -> e.execId) ~
-            ("Metrics Updated" -> e.taskMetrics.map {
-              case (taskId, stageId, attemptId, metrics) =>
+            ("Metrics Updated" -> e.accumUpdates.map {
+              case (taskId, stageId, attemptId, updates) =>
                 ("Task ID" -> taskId) ~
                   ("Stage ID" -> stageId) ~
                   ("Stage Attempt ID" -> attemptId) ~
-                  ("Task Metrics" -> JsonProtocol.taskMetricsToJson(metrics))
+                  ("Task Metrics" -> JsonArray(updates.map(JsonProtocol.accumulableInfoToJson).toList))
             })
         else
           JNothing

@@ -10,4 +10,4 @@ libraryDependencies += json4s
 
 spName := "hammerlab/spark-json-relay"
 
-sparkVersion := "1.5.0"
+sparkVersion := "2.0"
